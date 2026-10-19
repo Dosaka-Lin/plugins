@@ -1,5 +1,4 @@
 import assert from "node:assert/strict"
-import { createHash, createHmac } from "node:crypto"
 import test from "node:test"
 import { Loomy } from "./index.mjs"
 import { parseSessionInput, rewriteDeepseekImages, sessionFromPaste } from "./core.mjs"
@@ -52,10 +51,10 @@ test("an exported account keeps its session and identity", () => {
   assert.equal(auth.phone, "13800138000")
 })
 
-test("both sign-in ways save OAuth, not an API key", async () => {
+test("paste sign-in saves OAuth, not an API key", async () => {
   const plugin = await Loomy()
-  assert.deepEqual(plugin.auth.methods.map((m) => m.label), ["Phone + SMS code", "Paste Loomy login"])
-  const paste = plugin.auth.methods[1]
+  assert.deepEqual(plugin.auth.methods.map((m) => m.label), ["Paste Loomy login"])
+  const paste = plugin.auth.methods[0]
   assert.equal(paste.type, "oauth")
   const action = await paste.authorize({ login: JSON.stringify({
     provider: "loomy",
@@ -68,23 +67,11 @@ test("both sign-in ways save OAuth, not an API key", async () => {
   assert.equal(saved.accountId, "user-8")
 })
 
-test("the provider shape is valid before the first sign-in", async () => {
+test("config declares the provider before the first sign-in", async () => {
   const hooks = await Loomy()
   const cfg = { provider: {} }
   await hooks.config(cfg)
   assert.equal(cfg.provider.loomy.npm, "@ai-sdk/openai-compatible")
   assert.ok(cfg.provider.loomy.models["DeepSeek-V4.1-Flash"])
-})
-
-test("the CAccount signature is HMAC-SHA1 over the nine client fields", () => {
-  const body = JSON.stringify({ param: "value" })
-  const date = "Mon, 19 Oct 2026 00:00:00 GMT"
-  const nonce = "00000000-0000-4000-8000-000000000000"
-  const md5 = createHash("md5").update(body).digest("base64")
-  const expected = createHmac("sha1", "zsak6eadrbawz683wf5r3m2snrwj868r")
-    .update(["POST", "/login/phone/sendMsgCode", "", md5, "application/json", date, nonce, "", ""].join("\n"))
-    .digest("base64")
-  assert.equal(typeof expected, "string")
-  assert.ok(expected.length > 0)
 })
 

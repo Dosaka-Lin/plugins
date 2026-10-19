@@ -17,16 +17,15 @@ In OpenCode:
 
 ## Sign in
 
-The plugin offers **Phone + SMS code** and **Paste Loomy login**. The second accepts a session or the same shape as an exported login:
+Choose **Paste Loomy login** and paste the session or a login object:
 
 ```json
 {"provider":"loomy","auth":{"accessToken":"…","userid":"…","phone":"…"}}
 ```
 
-The session is kept in magpie's `plugin-auth.json` (mode 0600) or OpenCode's `auth.json`.
-Loomy sessions last about 14 days and there is no refresh endpoint; sign in again when the account lapses.
+The session is kept in magpie's `plugin-auth.json` (mode 0600) or OpenCode's `auth.json`. Loomy sessions last about 14 days and there is no refresh endpoint.
 
-**Phone + SMS code** sends the code through Loomy's CAccount endpoint, then asks for the six-digit code. **Paste Loomy login** is useful for an existing session or when a browser or phone is not at hand.
+Loomy's phone-code endpoint accepts a request and returns a `msgid`, but in testing the carrier did not deliver the SMS. The plugin therefore does not offer a phone-code sign-in; get the session from a Loomy desktop sign-in and paste it here.
 
 ## Models
 

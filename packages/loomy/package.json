@@ -1,7 +1,7 @@
 {
   "name": "@magpie-community/opencode-loomy-auth",
   "version": "0.1.0",
-  "description": "Loomy (讯飞) models, points, session sign-in and daily first-login check-in for magpie and OpenCode",
+  "description": "Loomy (讯飞) models, points, pasted session sign-in and daily first-login check-in for magpie and OpenCode",
   "type": "module",
   "main": "./index.mjs",
   "exports": "./index.mjs",

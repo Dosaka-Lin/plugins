@@ -98,63 +98,6 @@ function makeBase(traceid) {
   }
 }
 
-function phone(raw) {
-  const compact = String(raw ?? "").replace(/[\s-]/g, "")
-  const digits = compact.startsWith("+86") ? compact.slice(3) : /^86\d{11}$/.test(compact) ? compact.slice(2) : compact
-  if (!/^1[3-9]\d{9}$/.test(digits)) throw new Error("Enter an 11-digit mainland China phone number")
-  return digits
-}
-
-function code(raw) {
-  const value = String(raw ?? "").trim()
-  if (!/^\d{6}$/.test(value)) throw new Error("Enter the 6-digit SMS code")
-  return value
-}
-
-export async function sendCode(phoneNumber) {
-  const value = phone(phoneNumber)
-  const { randomUUID } = await crypto()
-  const payload = await signedJSON(
-    "/login/phone/sendMsgCode",
-    { base: makeBase(randomUUID().replace(/-/g, "")), param: { ccode: "86", phone: value, expire: 300 } },
-    "Sending the Loomy SMS code",
-  )
-  if (text(payload?.code) !== SUCCESS) throw new Error(`Loomy did not send the SMS code${upstreamMessage(payload) ? `: ${upstreamMessage(payload)}` : ""}`)
-  const msgid =
-    text(payload?.data?.msgid) || text(payload?.data?.msgId) ||
-    text(payload?.data?.data?.msgid) || text(payload?.data?.data?.msgId)
-  if (!msgid) throw new Error("Loomy sent an SMS code but returned no msgid")
-  return { msgid, phone: value }
-}
-
-export async function login(phoneNumber, smsCode, msgid) {
-  const phoneValue = phone(phoneNumber)
-  const codeValue = code(smsCode)
-  if (!text(msgid)) throw new Error("Send the SMS code first: Loomy requires its msgid")
-  const { randomUUID } = await crypto()
-  const payload = await signedJSON(
-    "/login/phone/checkCode",
-    {
-      base: makeBase(randomUUID().replace(/-/g, "")),
-      param: { ccode: "86", phone: phoneValue, mcode: codeValue, msgid: text(msgid), expire: 14 * 24 * 3600 },
-    },
-    "Signing in to Loomy",
-  )
-  if (text(payload?.code) !== SUCCESS) throw new Error(`Loomy refused the SMS sign-in${upstreamMessage(payload) ? `: ${upstreamMessage(payload)}` : ""}`)
-  const data = object(payload?.data)
-  const session = text(data.session)
-  if (!session) throw new Error("Loomy signed in but returned no session")
-  return {
-    type: "oauth",
-    access: session,
-    refresh: "",
-    expires: Date.now() + SESSION_TTL_MS,
-    accountId: text(data.userid) || phoneValue,
-    phone: phoneValue,
-    uid: text(data.userid),
-  }
-}
-
 function modelEntry(row) {
   const id = text(row?.id)
   if (!id) return null
